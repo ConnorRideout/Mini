@@ -1,33 +1,37 @@
-from tkinter import *
-from tkinter.ttk import *
-from pywinauto.application import Application
-from pywinauto import timings as winTimings
-from win32gui import FindWindow, SetWindowLong
-from win32api import GetMonitorInfo, MonitorFromPoint
-from trayicon import TrayIconBuilder as TrayIcon
-from operator import ne as NotEqual
+import os
 from fileinput import input as fileinput
+from operator import ne as NotEqual
+from re import search as reSearch
 from threading import Thread
 from time import sleep
+from tkinter import *
+from tkinter.ttk import *
+
 from PIL import Image
-from re import search as reSearch
-import os
+from pywinauto import timings as winTimings
+from pywinauto.application import Application
+from trayicon import TrayIconBuilder as TrayIcon
+from win32api import GetMonitorInfo, MonitorFromPoint
+from win32com.client import Dispatch
+from win32gui import FindWindow, SetWindowLong
 
-SPOTIFY_DIR = 'C:\\Users\\Cryden\\AppData\\Roaming\\Spotify'
-TRAY_ICON_IMG = 'SpotifyPlayer_icon.png'
+# PATH VARIABLES
+SPOTIFY_EXE = "C:\\Users\\Cryden\\AppData\\Roaming\\Spotify\\Spotify.exe"
+SPOTIFY_AHK = "C:\\Admin Tools\\Python\\MyScripts\\spotifyplayer\\SpotifyAHK.exe"
+SPOTIFY_LINK = "C:\\Users\\Cryden\\AppData\\Roaming\\Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar\\Spotify.lnk"
+TRAY_ICON_IMG = "C:\\Admin Tools\\Python\\MyScripts\\spotifyplayer\\SpotifyPlayer_icon.ico"
 
+# TEXT VARIABLES
 WIN_TITLE = "Spotify Premium"
 STARTUP_TEXT1 = "    ~Welcome!~    "
 STARTUP_TEXT2 = "   ~Starting up~   "
 SHUTDOWN_TXT1 = "    ~Goodbye!~     "
 SHUTDOWN_TXT2 = "~Shutting down~"
+FONT_DEF = "Calibri 18"
 
-AHK_FILE = 'SpotifyAHK.exe'
-RENAMED_FILE = '_Spotify.exe'
-EXE_FILE = 'Spotify.exe'
+# SIZE VARIABLES
 LBL_W = 175
 BTN_SIZE = 30
-FONT_DEF = 'Calibri 18'
 OFFSET_X = 275
 OFFSET_X_STEP = 25
 OFFSET_Y = 0
@@ -40,7 +44,7 @@ class SpotifyApp:
 		try: closeOld()
 		except Exception: pass
 		
-		self.app = Application().start(EXE_FILE)
+		self.app = Application().start(SPOTIFY_EXE)
 		self.win, i = None, 0
 		while not self.win:
 			try:
@@ -50,7 +54,7 @@ class SpotifyApp:
 				if (i := i+1) == 2:
 					try:
 						closeOld()
-						self.app = Application().start(EXE_FILE)
+						self.app = Application().start(SPOTIFY_EXE)
 					except Exception:
 						self.showError()
 				elif i == 5:
@@ -343,12 +347,12 @@ class GUI(Tk):
 					winTimings.wait_until(5, 0.1, self.spotify.win.window_text, WIN_TITLE, op=NotEqual) # timeout (sec), retry interval, func, value, operation
 					sleep(0.1)
 					title = self.spotify.win.window_text()
-				except TimeoutError:
+				except Exception:
 					title = '  -  '
 				self.spotify.win.send_keystrokes('{SPACE}') # stop playing
 				sleep(0.1)
 				self.spotify.win.send_keystrokes('^{UP 8}') # set volume to mid
-			except TimeoutError:
+			except Exception:
 				title = '  -  '
 			return title
 		def tryToUpdate(text):
@@ -391,16 +395,21 @@ class GUI(Tk):
 		self.spotify.app.wait_for_process_exit(timeout=999*999, retry_interval=1)
 		if self.showPlayer:
 			self.closePlayer()
-		os.rename(EXE_FILE, RENAMED_FILE)
-		os.rename(AHK_FILE, EXE_FILE)
+		changeShortcut(SPOTIFY_AHK)
 		self.destroy()
 		raise SystemExit
 
+def changeShortcut(newPath):
+	link = Dispatch("WScript.Shell").CreateShortcut(SPOTIFY_LINK)
+	link.Targetpath = newPath
+	link.save()
 
 if __name__ == '__main__':
-	os.chdir(SPOTIFY_DIR)
-	if AHK_FILE not in os.listdir():
-		os.rename(EXE_FILE, AHK_FILE)
-		os.rename(RENAMED_FILE, EXE_FILE)
-	root = GUI()
-	root.mainloop()
+	try:
+		changeShortcut(SPOTIFY_EXE)
+		root = GUI()
+		root.mainloop()
+	except Exception:
+		from traceback import format_exc
+		os.system("""nircmd infobox "{}" "ERROR" """.format(format_exc().replace('\n', '~n')))
+		# os.system("""start "" powershell -command "write-host \\"{}\\""; pause""".format(format_exc().replace('\n', '`n')))
