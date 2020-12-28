@@ -3,9 +3,7 @@
 
 def _show_info(script, output, win, msgType='error'):
 	if win:
-		os_sys("""cmd /c "{} & pause" """
-				.format(' & '.join(['{}'.format('echo {}'
-				.format(l) if l else 'echo.') for l in output.split('\n')])))
+		os_sys("""start "" powershell -command "write-host \\"{}\\""; pause""".format(output.replace('\n', '`n')))
 	else:
 		print(output)
 
@@ -18,7 +16,7 @@ class createSym:
 			The path where the SymLink should be placed"""
 	from tkinter import Tk, filedialog
 	from tkinter.ttk import Label, Button
-	from os import path as os_path, symlink
+	from os import symlink
 	
 	def __init__(self, initDir):
 		self.root = self.Tk()
@@ -47,10 +45,10 @@ class createSym:
 		try:
 			if opt=='folder' and (target:=self.filedialog.askdirectory(initialdir=self.initDir,
 													title='Select a folder to create a link to:')):
-				name = self.os_path.join(self.initDir, self.os_path.basename(target))
+				name = os_path.join(self.initDir, os_path.basename(target))
 			elif opt=='file' and (target:=self.filedialog.askopenfilename(initialdir=self.initDir,
 													title='Select a file to create a link to:')):
-				name = self.os_path.join(self.initDir, self.os_path.basename(target))
+				name = os_path.join(self.initDir, os_path.basename(target))
 			else:
 				return
 			self.symlink(target, name)
@@ -153,13 +151,13 @@ class listItemsInDir:
 
 class alterImages:
 	"""\
-	Convert all files in a directory to jpg."""
+	Resize all files in a directory to 2k and convert them to jpg."""
 	def argInfo(self):
 		"""\
 		runFile (type:string)
 			The path to the file that's running this script"""
 	def __init__(self, runFile):
-		from os import chdir, listdir, path as os_path
+		from os import chdir, listdir
 		chdir(os_path.dirname(runFile))
 		files = ' '.join(['"{}"'.format(f) for f in listdir() if os_path.isfile(f) and
 						 f != os_path.basename(runFile) and os_path.splitext(f)[1] != '.lnk'])
@@ -171,7 +169,7 @@ class alterImages:
 
 class _main:
 	def __init__(self, locs):
-		self.parser = argparse.ArgumentParser(description=__doc__, add_help=False,
+		self.parser = argparse.ArgumentParser(prog=os_path.basename(os_path.dirname(__file__)), description=__doc__, add_help=False,
 											  formatter_class=argparse.RawTextHelpFormatter)
 		self.parser.add_argument('-h', '--help', help="show this help message", action='store_true')
 		self.parser.add_argument('-w', '--window', help="show help and errors in a window",
@@ -217,9 +215,10 @@ class _main:
 locs = {na:fn for na,fn in locals().items() if na[0] != '_' and hasattr(fn, '__call__')}
 from contextlib import redirect_stdout
 from traceback import format_exc
-from os import system as os_sys
+from os import system as os_sys, path as os_path
 from threading import Thread
 from io import StringIO
+from re import escape
 from time import sleep
 from textwrap import *
 import argparse
