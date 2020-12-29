@@ -1,7 +1,4 @@
-def main():
-	from . import _run
-
-	_run()
+from . import _run
 
 if __name__ == "__main__":
-	main()
+    _run()
