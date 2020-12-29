@@ -4,8 +4,8 @@ from operator import ne as NotEqual
 from re import search as reSearch
 from threading import Thread
 from time import sleep
-from tkinter import *
-from tkinter.ttk import *
+from tkinter import Tk, Toplevel, Menu, Canvas
+from tkinter.ttk import Style, Label, Frame
 
 from PIL import Image
 from pywinauto import timings as winTimings
@@ -91,7 +91,7 @@ class Marquee(Thread):
     def run(self):
         try:
             while self.running:
-                self.lbl.place(x=self.curX, rely=0.4, anchor=W)
+                self.lbl.place(x=self.curX, rely=0.4, anchor='w')
                 self.curX -= 1
                 if abs(self.curX) == self.longW-self.shortW:
                     self.curX = 0
@@ -113,9 +113,9 @@ class PlayerMenu:
             label="Move (Vertical)", command=lambda: self.movePlayer("Y"))
         self.movemenu.add_separator()
         self.movemenu.add_command(
-            label="Save Position", command=self.savePos, state=DISABLED)
+            label="Save Position", command=self.savePos, state='disabled')
         self.movemenu.add_command(
-            label="Reset Position", command=self.resetPos, state=DISABLED)
+            label="Reset Position", command=self.resetPos, state='disabled')
         self.mainmenu.add_cascade(label="Move Player", menu=self.movemenu)
         self.mainmenu.add_separator()
         self.mainmenu.add_command(
@@ -139,7 +139,7 @@ class PlayerMenu:
 
     def on_click(self, event):
         self.xy = [event.x, event.y]
-        self.tw = Toplevel(self.root, bg='white', bd=3, relief=GROOVE)
+        self.tw = Toplevel(self.root, bg='white', bd=3, relief='groove')
         self.tw.attributes('-transparentcolor', 'white', '-topmost', 1)
         self.tw.overrideredirect(1)
         self.tw.geometry(self.root.geometry())
@@ -159,8 +159,8 @@ class PlayerMenu:
             self.root.geometry(self.tw.geometry())
             OFFSET_X -= self.dX
             OFFSET_Y -= self.dY
-            self.movemenu.entryconfig(4, state=NORMAL)
-            self.movemenu.entryconfig(5, state=NORMAL)
+            self.movemenu.entryconfig(4, state='normal')
+            self.movemenu.entryconfig(5, state='normal')
         self.tw.destroy()
         self.stopMoving()
 
@@ -174,8 +174,8 @@ class PlayerMenu:
         self.root.config(cursor="arrow")
 
     def savePos(self):
-        self.movemenu.entryconfig(4, state=DISABLED)
-        self.movemenu.entryconfig(5, state=DISABLED)
+        self.movemenu.entryconfig(4, state='disabled')
+        self.movemenu.entryconfig(5, state='disabled')
         change = {'OFFSET_X': OFFSET_X, 'OFFSET_Y': OFFSET_Y}
         for line in fileinput(__file__, inplace=True):
             line = line.rstrip('\r\n')
@@ -184,8 +184,8 @@ class PlayerMenu:
             print(out)
 
     def resetPos(self):
-        self.movemenu.entryconfig(4, state=DISABLED)
-        self.movemenu.entryconfig(5, state=DISABLED)
+        self.movemenu.entryconfig(4, state='disabled')
+        self.movemenu.entryconfig(5, state='disabled')
         self.root.focus_set()
         self.root.geometry(
             '+{}+{}'.format(self.root.screen.X, self.root.screen.Y))
@@ -343,9 +343,9 @@ class GUI(Tk):
         self.stopMarquees()
         # set labels
         self.trackLbl.config(text=self.track)
-        self.trackLbl.place(x=0, rely=0.45, anchor=W)
+        self.trackLbl.place(x=0, rely=0.45, anchor='w')
         self.artistLbl.config(text=self.artist)
-        self.artistLbl.place(x=0, rely=0.45, anchor=W)
+        self.artistLbl.place(x=0, rely=0.45, anchor='w')
         self.update_idletasks()
         # track marquee
         trackW = self.trackLbl.winfo_reqwidth()
