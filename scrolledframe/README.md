@@ -114,6 +114,8 @@ scroll area and hide/unhide the scrollbars (if set).
                     </ul>
                 </dl>
             </td>
+        </tr>
+        <tr>
             <td align="center">2.1</td>
             <td>
                 <dl>
@@ -125,7 +127,7 @@ scroll area and hide/unhide the scrollbars (if set).
                     </ul>
                     <dt>bugfixes</dt>
                     <ul>
-                        <li>fixed major lag when updating list</li>
+                        <li>fixed lag when updating list</li>
                     </ul>
                 </dl>
             </td>
