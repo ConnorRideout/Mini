@@ -7,10 +7,10 @@ and can be set to disappear automatically when not needed.
 
 # Usage
 ```
-ScrolledFrame(master, scrollbars, dohide, padding, doupdate, **kwargs)
+ScrolledFrame(master, scrollbars, padding, dohide, doupdate, scrollspeed, **kwargs)
 ```
 The constructor accepts all tk.Frame widget keyword arguments, plus the following
-special arguments:
+special immutable arguments:
 
 ## Special Arguments
 ### scrollbars
@@ -18,19 +18,24 @@ special arguments:
 Where to put the scrollbars (e/g "SR"=South and Right edges).  
 Must be with 1 or 2 characters.
 
+### padding
+**`Integer or list of integers`** _(default=[3,3,0,0])_  
+Padding between the outer tk.Frame/Scrollbars and the inner tk.Frame.  
+format=pad_all _or_ [pad EW, pad NS] _or_ [pad left, pad top, pad right, pad bottom]
+
 ### dohide
 **`Boolean`** _(default=True)_  
 Whether to hide the scrollbars when not needed.
 
-### padding
-**`list of integers`** _(default=[3,3,0,0])_  
-Padding between the outer tk.Frame/Scrollbars and the inner tk.Frame.  
-format=[pad left, pad top, pad right, pad bottom]
-
 ### doupdate
-**`boolean`** _(default=True)_  
+**`Boolean`** _(default=True)_  
 Whether to automatically redraw the Widget whenever it changes size.  
 Setting to False may improve performance.
+
+### scrollspeed
+**`Integer`** _(default=2)_  
+The number of lines to scroll by per mousewheel scroll.  
+Setting to 0 disables mousewheel scrolling
 
 
 # Accessible Data Members
