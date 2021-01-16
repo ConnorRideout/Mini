@@ -114,6 +114,21 @@ scroll area and hide/unhide the scrollbars (if set).
                     </ul>
                 </dl>
             </td>
+            <td align="center">2.1</td>
+            <td>
+                <dl>
+                    <dt>new</dt>
+                    <ul>
+                        <li>added scrollspeed argument</li>
+                        <li>cleaned up code</li>
+                        <li>added a bunch of comments</li>
+                    </ul>
+                    <dt>bugfixes</dt>
+                    <ul>
+                        <li>fixed major lag when updating list</li>
+                    </ul>
+                </dl>
+            </td>
         </tr>
     </tbody>
 </table>
