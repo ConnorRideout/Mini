@@ -1,47 +1,46 @@
 # Change Color
 
-Return a given color value after selected modifications.
+A collection of functions which take a color, alter it, and return the resulting color.
 
+## Usage
 
-# Usage
-```
-lighten(inputType, value [, percent=25, returnType='HEX', bitDepth=8])
-```
-```
-darken(inputType, value [, percent=25, returnType='HEX', bitDepth=8])
-```
-```
-saturate(inputType, value [, percent=25, returnType='HEX', bitDepth=8])
-```
-```
-desaturate(inputType, value [, percent=25, returnType='HEX', bitDepth=8])
-```
-```
-invert(inputType, value [, returnType='HEX', bitDepth=8])
-```
+from changecolor import . . .
+
+- `lighten` ( color [, percent, inputtype, returntype, bitdepth] )
+- `darken` ( color [, percent, inputtype, returntype, bitdepth] )
+- `saturate` ( color [, percent, inputtype, returntype, bitdepth] )
+- `desaturate` ( color [, percent, inputtype, returntype, bitdepth] )
+- `invert` ( color [, inputtype, returntype, bitdepth] )
 
 ## Arguments
-### inputtype
-**`String`** _(required)_  
-The data type of the input. One of `HEX`, `RGB`, `HSV`, or `HLS`.
 
-### value
-**`List` OR `string`** _(required)_  
-The data. If `inputType` is `HEX`, must be a string. Otherwise, must be a list of 3 integers.
+1. ### `color` _(required)_
 
-### percent
-**`Int`** _(default=25)_  
-Percent by which to change the color. Integer between 1 and 100.
+   **List OR String**  
+   The initial color. If `inputtype` is "HEX", must be a string. Otherwise, must be a list of 3 integers.
 
-### returnas
-**`String`** _(default="HEX")_  
-The data type to return. One of `HEX`, `RGB`, `HSV`, or `HLS`.
+2. ### `percent` _(optional)_
 
-### bitdepth
-**`Int`** _(default=8)_  
-The color bit depth. Either 8 or 16.
+   **Integer** _(default=25)_  
+   Percent by which to change the color. Integer between 1 and 100, where 100 would change black to white or vice versa.
 
-# Changelog
+3. ### `inputtype` _(optional)_
+
+   **String** _(default=None)_  
+   The data type of the input. One of "HEX", "RGB", "HSV", or "HLS". If not specified, it will be assumed to be "HEX" if `color` is a string, else "RGB".
+
+4. ### `returnas` _(optional)_
+
+   **String** _(default="HEX")_  
+   The data type to return. One of "HEX", "RGB", "HSV", or "HLS".
+
+5. ### `bitdepth` _(optional)_
+
+   **Integer** _(default=8)_  
+   The color bit depth. Either 8 or 16.
+
+## Changelog
+
 <table>
     <tbody>
         <tr>
@@ -64,6 +63,23 @@ The color bit depth. Either 8 or 16.
                     <dt>bugfixes</dt>
                     <ul>
                         <li>fixed output</li>
+                    </ul>
+                </dl>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">2.1</td>
+            <td>
+                <dl>
+                    <dt>new</dr>
+                    <ul>
+                        <li>added typing hints</li>
+                        <li>rearranged functions into modules</li>
+                        <li>updated argument names</li>
+                    </ul>
+                    <dt>bugfixes</dt>
+                    <ul>
+                        <li>fixed error with HLS/HSV inputtypes</li>
                     </ul>
                 </dl>
             </td>
