@@ -1,10 +1,15 @@
 from tkinter import Frame as _Frame, Canvas as _Canvas, Scrollbar as _Scrollbar, Grid as _Grid, Pack as _Pack, Place as _Place
 from re import match as _re_match, sub as _re_sub
 
+from typing import TYPE_CHECKING as _TYPE_CHECKING
+if _TYPE_CHECKING:
+    from typing import Union as U, Callable as C
+    from tkinter import Widget, Event
+
 
 class ScrolledFrame(_Frame):
-    def __init__(self, master=None, scrollbars='SE', padding=[3, 3, 0, 0],
-                 dohide=True, doupdate=True, scrollspeed=2, **kwargs):
+    def __init__(self, master: "Widget", scrollbars: str = 'SE', padding: "U[int, list, tuple]" = [3, 0, 0, 3],
+                 dohide: bool = True, doupdate: bool = True, scrollspeed: int = 2, **kwargs):
         padding = self.__expandPad(padding)
         self.__validateVars(padding, scrollbars)
         # set var defaults if not specified
@@ -18,15 +23,15 @@ class ScrolledFrame(_Frame):
         # set initial values
         self.__hideBars = dohide
         self.__scrollSpeed = scrollspeed
-        self.hScrbar = False
-        self.vScrbar = False
+        self.hScrbar = None
+        self.vScrbar = None
         self.__showVScroll = False
         self.__showHScroll = False
         self.__allChildren = dict()
 
         # create widget
         self.__createContainer(master, kwargs)
-        self.__sfc = '{}_children'.format(self.container.winfo_id())
+        self.__sfc = f'{self.container.winfo_id()}_children'
         self.__createScrollFrame(*padding)
         self.__retag()
         if doupdate:
@@ -41,15 +46,16 @@ class ScrolledFrame(_Frame):
             if method[0] != '_' and 'config' not in method:
                 setattr(self, method, getattr(self.container, method))
 
-    def __expandPad(self, pad):
+    @staticmethod
+    def __expandPad(pad: "U[int, list, tuple]") -> "U[str, int, list, tuple]":
         # format the padding
         if isinstance(pad, (list, tuple)):
             l = len(pad)
-            return pad if l == 4 else pad*2 if l == 2 else 'fail'
+            return pad if l == 4 else (pad * 2) if l == 2 else 'fail'
         else:
             return [pad]*4 if isinstance(pad, int) else 'fail'
 
-    def __validateVars(self, pad, sbars):
+    def __validateVars(self, pad: "U[int, list, tuple]", sbars: str) -> None:
         # check padding var
         if len([n for n in pad if isinstance(n, int)]) != 4:
             raise AttributeError(
@@ -64,46 +70,48 @@ class ScrolledFrame(_Frame):
             raise AttributeError(
                 "<scrollbars> argument must be 1 or 2 letters: 'N/T|S/B' and/or 'E/R|W/L")
 
-    def __createContainer(self, master, kwargs):
+    def __createContainer(self, master: "Widget", kwargs: dict) -> None:
         # create the container that holds everything
-        self.container = _Frame(master, **kwargs)
+        self.container = _Frame(master=master,
+                                **kwargs)
         self.container.grid_propagate(0)
         self.container.rowconfigure(1 if self.__sbX == 'N' else 0,
                                     weight=1)
         self.container.columnconfigure(1 if self.__sbY == 'W' else 0,
                                        weight=1)
 
-    def __createScrollFrame(self, pL, pT, pR, pB):
+    def __createScrollFrame(self, pT: int, pR: int, pB: int, pL: int) -> None:
         # create the canvas that holds the scrolled window
-        self.scrollCanvas = _Canvas(self.container,
+        self.scrollCanvas = _Canvas(master=self.container,
                                     highlightthickness=0,
                                     bg=self.__BG,
                                     cursor=self.__CURSOR)
-        self.scrollCanvas.grid(row=1 if self.__sbX == 'N' else 0,
-                               column=1 if self.__sbY == 'W' else 0,
+        self.scrollCanvas.grid(column=1 if self.__sbY == 'W' else 0,
+                               row=1 if self.__sbX == 'N' else 0,
                                sticky='nsew',
                                padx=(pL, pR),
                                pady=(pT, pB))
         # create the scrolled window
-        _Frame.__init__(self, self.scrollCanvas,
+        _Frame.__init__(self,
+                        master=self.scrollCanvas,
                         bg=self.__BG,
                         cursor=self.__CURSOR)
         # create scrollbars
         if self.__sbY:
-            self.vScrbar = _Scrollbar(self.container,
+            self.vScrbar = _Scrollbar(master=self.container,
                                       orient='vertical',
                                       command=self.scrollCanvas.yview)
-            self.vScrbar.grid(row=1 if self.__sbX == 'N' else 0,
-                              column=0 if self.__sbY == 'W' else 1,
+            self.vScrbar.grid(column=0 if self.__sbY == 'W' else 1,
+                              row=1 if self.__sbX == 'N' else 0,
                               sticky='ns')
             self.scrollCanvas.config(yscrollcommand=self.vScrbar.set)
             self.__showVScroll = True
         if self.__sbX:
-            self.hScrbar = _Scrollbar(self.container,
+            self.hScrbar = _Scrollbar(master=self.container,
                                       orient='horizontal',
                                       command=self.scrollCanvas.xview)
-            self.hScrbar.grid(row=0 if self.__sbX == 'N' else 1,
-                              column=1 if self.__sbY == 'W' else 0,
+            self.hScrbar.grid(column=1 if self.__sbY == 'W' else 0,
+                              row=0 if self.__sbX == 'N' else 1,
                               sticky='ew')
             self.scrollCanvas.config(xscrollcommand=self.hScrbar.set)
             self.__showHScroll = True
@@ -113,13 +121,13 @@ class ScrolledFrame(_Frame):
                                                          anchor='nw',
                                                          window=self)
 
-    def __bindScroll(self, func):
-        def scrollView(e):
+    def __bindScroll(self, func: "C") -> None:
+        def scrollView(e: "Event"):
             val = -self.__scrollSpeed if e.delta > 0 else self.__scrollSpeed
             func(val, 'units')
         self.bind_class(self.__sfc, '<MouseWheel>', scrollView)
 
-    def __updateScrolling(self, sbars):
+    def __updateScrolling(self, sbars: str) -> None:
         if self.vScrbar and 'v' in sbars:
             # there is a vert scrollbar and it needs to be updated
             if self.__showVScroll:
@@ -151,16 +159,18 @@ class ScrolledFrame(_Frame):
             # neither scrollbar is needed
             self.unbind_class(self.__sfc, '<MouseWheel>')
 
-    def __retag(self):
+    def __retag(self) -> None:
         # recurse through all children of widget and add the custom tag
         c = [self.container]
         [c.extend(w.winfo_children()) for w in c]
         curChildren = set(c)
-        if (newWidgets := curChildren.difference(self.__allChildren)):
+        newWidgets = curChildren.difference(self.__allChildren)
+        if newWidgets:
             [w.bindtags((self.__sfc,) + w.bindtags()) for w in newWidgets]
         self.__allChildren = curChildren
 
-    def redraw(self, event=None):
+    def redraw(self, _=None) -> None:
+        self.update_idletasks()
         # update widget
         self.__retag()
         reqWd = self.winfo_reqwidth()
@@ -187,14 +197,16 @@ class ScrolledFrame(_Frame):
                                      width=max(reqWd, scrCnvWd),
                                      height=max(reqHt, scrCnvHt))
 
-    def configure(self, **kwargs):
+    def configure(self, **kwargs) -> None:
         # intercept configure commands
         kw = dict()
-        if (bg := kwargs.get('background', kwargs.get('bg'))):
+        bg = kwargs.get('background', kwargs.get('bg'))
+        if bg:
             # get user requested background
             self.__BG = bg
             kw.update({'bg': self.__BG})
-        if (cur := kwargs.get('cursor')):
+        cur = kwargs.get('cursor')
+        if cur:
             # get user requested cursor
             self.__CURSOR = cur
             kw.update({'cursor': self.__CURSOR})
@@ -206,3 +218,7 @@ class ScrolledFrame(_Frame):
         _Frame.configure(self, **kwargs)
 
     config = configure
+
+    def destroy(self) -> None:
+        _Frame.destroy(self)
+        self.container.destroy()

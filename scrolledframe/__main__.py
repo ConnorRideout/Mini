@@ -20,9 +20,9 @@ the following immutable arguments:
 -scrollbars (type:string; default='SE')
    Where to put the scrollbars (e/g 'SR'=South and Right)
    String must be 1 or 2 characters (NSEW and/or TBRL)
--padding (type:integer or list of integers; default=[3,3,0,0])
+-padding (type:integer or list of integers; default=[3,0,0,3])
    Padding between the outer Frame/Scrollbars and the
-   inner Frame. <all> or [EW, NS] or [left,top,right,bottom]
+   inner Frame. <all> or [NS,EW] or [top,right,bottom,left]
 -dohide (type:boolean; default=True)
    Whether to hide the scrollbars when not needed
 -doupdate (type:boolean; default=True)
@@ -34,7 +34,7 @@ the following immutable arguments:
 """
 
 
-def example():
+def example() -> None:
     try:
         from . import ScrolledFrame
     except ImportError:
@@ -42,42 +42,62 @@ def example():
     from tkinter import Label, Button
 
     sframe = ScrolledFrame()
-    lbl = Label(sframe, text='Start', font='Calibri 12', justify='left')
+    lbl = Label(master=sframe,
+                text='Start',
+                font='Calibri 12',
+                justify='left')
     lbl.grid()
     curCol = 1
     curRow = 1
-    rLbl = Label(sframe, text='HorzLabel1', font='Calibri 12')
-    rLbl.grid(row=0, column=curCol)
-    bLbl = Label(sframe, text='VertLabel1', font='Calibri 12')
-    bLbl.grid(row=curRow, column=0)
+    rLbl = Label(master=sframe,
+                 text='HorzLabel1',
+                 font='Calibri 12')
+    rLbl.grid(column=curCol,
+              row=0)
+    bLbl = Label(master=sframe,
+                 text='VertLabel1',
+                 font='Calibri 12')
+    bLbl.grid(column=0,
+              row=curRow)
 
-    def b1cmd():
+    def b1cmd() -> None:
         lbl.config(text=__doc__)
 
-    def b2cmd():
+    def b2cmd() -> None:
         nonlocal curCol
         curCol += 1
-        txt = 'HorzLabel{}'.format(curCol)
-        rLbl = Label(sframe, text=txt, font='Calibri 12')
-        rLbl.grid(row=0, column=curCol)
+        txt = f'HorzLabel{curCol}'
+        rLbl = Label(master=sframe,
+                     text=txt,
+                     font='Calibri 12')
+        rLbl.grid(column=curCol,
+                  row=0)
         sframe.redraw()
 
-    def b3cmd():
+    def b3cmd() -> None:
         nonlocal curRow
         curRow += 1
-        txt = 'VertLabel{}'.format(curRow)
-        bLbl = Label(sframe, text=txt, font='Calibri 12')
-        bLbl.grid(row=curRow, column=0)
+        txt = f'VertLabel{curRow}'
+        bLbl = Label(master=sframe,
+                     text=txt,
+                     font='Calibri 12')
+        bLbl.grid(column=0,
+                  row=curRow)
         sframe.redraw()
 
-    b1 = Button(text='View readme', command=b1cmd)
+    b1 = Button(text='View readme',
+                command=b1cmd)
     b1.pack(side='top')
-    b2 = Button(text='Add Label Right', command=b2cmd)
+    b2 = Button(text='Add Label Right',
+                command=b2cmd)
     b2.pack(side='right')
-    b3 = Button(text='Add Label Bottom', command=b3cmd)
+    b3 = Button(text='Add Label Bottom',
+                command=b3cmd)
     b3.pack(side='bottom')
 
-    sframe.pack(expand=True, fill='both', side='top')
+    sframe.pack(expand=True,
+                fill='both',
+                side='top')
     sframe.update_idletasks()
     sframe.mainloop()
 
