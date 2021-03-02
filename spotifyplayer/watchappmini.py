@@ -4,9 +4,14 @@ from threading import Thread
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .player import GUI
+    from pywinauto.application import WindowSpecification
 
 
 class WatchMini(Thread):
+    running: bool
+    root: "GUI"
+    win: "WindowSpecification"
+
     def __init__(self, root: "GUI"):
         Thread.__init__(self, daemon=True)
         self.running = True
@@ -23,7 +28,7 @@ class WatchMini(Thread):
             except OSError:
                 break
             win_wait_until(timeout=7**7,
-                           retry_interval=0.5,
+                           retry_interval=0.1,
                            func=self.doCheck)
 
     def doCheck(self) -> bool:

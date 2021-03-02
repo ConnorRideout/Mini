@@ -176,5 +176,25 @@ Compile the ahk file. Set the variables in lib\constants.py to the proper values
                 </dl>
             </td>
         </tr>
+        <tr>
+            <td align="center">3.1</td>
+            <td>
+                <dl>
+                    <dt>new</dt>
+                    <ul>
+                        <li>consolidated code</li>
+                        <li>added more configurable variables</li>
+                        <li>moved some functions to different classes</li>
+                        <li>added type hinting</li>
+                        <li>changed timings</li>
+                    </ul>
+                    <dt>bugfixes</dt>
+                    <ul>
+                        <li>fixed issue with program not closing</li>
+                        <li>fixed error where Spotify wouldn't become active</li>
+                    </ul>
+                </dl>
+            </td>
+        </tr>
     </tbody>
 </table>

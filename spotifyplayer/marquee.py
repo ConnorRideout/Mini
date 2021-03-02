@@ -1,26 +1,32 @@
 from threading import Thread
 from time import sleep
 
-from typing import TYPE_CHECKING
+from .lib.constants import *
+
 if TYPE_CHECKING:
     from tkinter import Label
 
 
 class Marquee(Thread):
+    running: bool
+    lbl: "Label"
+    lblWd: int
+    curX: int
+
     def __init__(self, txtWd: int, lbl: "Label"):
         Thread.__init__(self, daemon=True)
         self.running = True
         self.lbl = lbl
-        self.lblWd = lbl.winfo_reqwidth() - txtWd
-        self.curX = 0
+        self.lblWd = (lbl.winfo_reqwidth() - txtWd)
+        self.curX = int()
 
     def run(self) -> None:
-        sleep(1.5)
+        sleep(SCROLL_WAIT)
         while self.running:
             self.lbl.place(x=self.curX)
-            self.curX -= 1
+            self.curX += SCROLL_MOTION
             if abs(self.curX) == self.lblWd:
                 self.curX = 0
-                sleep(1.5)
+                sleep(SCROLL_WAIT)
             else:
-                sleep(0.025)
+                sleep(SCROLL_TICK)

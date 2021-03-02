@@ -1,34 +1,42 @@
-from tkinter import Tk, Canvas, StringVar
+from win32gui import FindWindow, SetWindowLong, SetForegroundWindow
 from tkinter.ttk import Style, Label, Frame
-from threading import Thread
+from tkinter import Tk, Canvas, StringVar
 from time import sleep
 
-from win32gui import FindWindow, SetWindowLong, SetForegroundWindow
 
+from .watchforupdate import WatchUpdate
+from .watchappmini import WatchMini
 from .spotifyapp import SpotifyApp
 from .playermenu import PlayerMenu
-from .marquee import Marquee
 from .waitforexit import WaitExit
-from .watchappmini import WatchMini
-from .watchforupdate import WatchUpdate
+from .marquee import Marquee
 from .lib.constants import *
 
 if TYPE_CHECKING:
-    from typing import Optional as O
-    from threading import Thread
     from tkinter import Event
 
 
 class GUI(Tk):
+    artist: StringVar
+    artistLbl: Label
+    btns: dict[str, Canvas]
+    isPlaying: bool
+    marquees: list[Marquee]
+    screen = Screen()
+    spotify: SpotifyApp
+    spotifyMini: bool
+    threads: tuple[WatchMini, WatchUpdate]
+    track: StringVar
+    trackLbl: Label
+
     def __init__(self):
         # initialize tkinter
-        self.screen = Screen()
         Tk.__init__(self)
-        self.config(bg='black')
-        self.title(APP_TITLE)
-        self.protocol("WM_DELETE_WINDOW",
-                      self.closePlayer)
-        self.attributes('-transparentcolor', 'black',
+        self.configure(bg=CLR_BG)
+        self.title("Spotify Taskbar Player")
+        self.protocol(name="WM_DELETE_WINDOW",
+                      func=self.closePlayer)
+        self.attributes('-transparentcolor', CLR_BG,
                         '-topmost', True)
         self.overrideredirect(True)
         self.resizable(False, False)
@@ -36,123 +44,103 @@ class GUI(Tk):
                       f'x{self.screen.appH}'
                       f'+{self.screen.X}'
                       f'+{self.screen.Y}')
-        # initialize variables
-        self.spotifyMini = False
-        self.isPlaying = False
-        self.track = StringVar(self)
-        self.track.set(STARTUP_TEXT_LEFT)
-        self.artist = StringVar(self)
-        self.artist.set(STARTUP_TEXT_RIGHT)
-        self.marquees: "list[Thread]" = list()
-        # set default styles
-        self.option_add('*Canvas.background', 'black')
-        Style().configure('TFrame', background='black')
+        # set default colors/fonts
+        self.option_add('*background', CLR_BG)
+        Style().configure('.', background=CLR_BG)
         Style().configure('TLabel',
                           font=FONT_DEF,
-                          background='black',
-                          foreground='white')
+                          foreground=CLR_TEXT)
+        self.buildPlayer()
+
+    def buildPlayer(self) -> None:
+        # initialize variables
+        self.marquees = list()
+        self.btns = dict()
+        self.isPlaying = False
+        self.spotifyMini = False
+        self.track = StringVar()
+        self.track.set(STARTUP_TEXT_L)
+        self.artist = StringVar()
+        self.artist.set(STARTUP_TEXT_R)
         # make GUI child of taskbar
-        self.setChild()
+        self.update_idletasks()
+        hwnd = FindWindow(None, "Spotify Taskbar Player")
+        trayhwnd = FindWindow('Shell_TrayWnd', None)
+        SetWindowLong(hwnd, -8, trayhwnd)
         # build GUI elements
         self.createPlayer()
         self.updateLabels()
         pMenu = PlayerMenu(self)
         # start spotify
-        self.spotify = SpotifyApp()
+        self.spotify = SpotifyApp(self)
         # start threads
         WaitExit(self).start()
-        self.threads: "list[Thread]" = [WatchMini(self), WatchUpdate(self)]
+        self.threads = (WatchMini(self),
+                        WatchUpdate(self, self.spotify.startTitle))
         for thread in self.threads:
             thread.start()
-        # re-enable the spotify window
-        self.spotify.showSpotify()
-        self.spotify.win.minimize()
-        sleep(0.1)
-        self.spotify.win.restore()
         # bind keys
         self.bind_all('<MouseWheel>', self.sendInput)
         self.bind_all('<ButtonRelease-3>', pMenu.show)
 
-    def setChild(self) -> None:
-        self.update_idletasks()
-        self.hwnd = FindWindow(None, 'Spotify Taskbar Player')
-        self.trayhwnd = FindWindow('Shell_TrayWnd', None)
-        SetWindowLong(self.hwnd, -8, self.trayhwnd)
-
     def createPlayer(self) -> None:
         # create buttons
-        self.btns: dict[str, Canvas] = dict()
         for i, (btn, coords) in enumerate(BTN_POINTS.items()):
             self.btns[btn] = self.createButton(i, coords)
-        # create labels
-        frmTrk = Frame(self,
-                       height=BTN_SIZE,
-                       width=LBL_W)
-        self.trackLbl = Label(frmTrk,
-                              textvariable=self.track)
-
-        frmArt = Frame(self,
-                       height=BTN_SIZE,
-                       width=LBL_W)
-        self.artistLbl = Label(frmArt,
-                               textvariable=self.artist)
-        # place everything
-        self.btns['prev'].grid(column=0,
-                               row=0)
-
-        frmTrk.grid(column=1,
-                    row=0)
-        self.trackLbl.place(x=0,
-                            rely=0.45,
-                            anchor='w')
-
-        self.btns['stop'].grid(column=2,
-                               row=0)
         self.btns['stop'].grid_remove()
-        self.btns['play'].grid(column=2,
-                               row=0)
+        # create labels
+        self.trackLbl = self.createLabel(1, self.track)
+        self.artistLbl = self.createLabel(3, self.artist)
 
-        frmArt.grid(column=3,
-                    row=0)
-        self.artistLbl.place(x=0,
-                             rely=0.45,
-                             anchor='w')
+    def createButton(self, btn: int, coords: tuple[int]) -> Canvas:
+        def hoverEvent(clr: str):
+            cnv.itemconfigure(tagOrId=cir,
+                              outline=clr)
+            cnv.itemconfigure(tagOrId=poly,
+                              outline=clr,
+                              fill=clr)
 
-        self.btns['next'].grid(column=4,
-                               row=0)
-
-    def createButton(self, i: int, coords: list[int]) -> Canvas:
-        def onEnter(thisCnv: Canvas, thisCir, thisPoly, clr: str = 'lightgray'):
-            thisCnv.itemconfig(thisCir, outline=clr)
-            thisCnv.itemconfig(thisPoly, outline=clr, fill=clr)
-
-        def onExit(*args): onEnter(*args, 'white')
-
-        cnv = Canvas(self,
+        cnv = Canvas(master=self,
                      height=BTN_SIZE,
                      width=BTN_SIZE)
         # create outline
-        cir = cnv.create_oval(0, 0, BTN_SIZE - 1, BTN_SIZE - 1,
-                              outline='white')
+        cir: int = cnv.create_oval(0, 0, BTN_SIZE - 1, BTN_SIZE - 1,
+                                   outline=CLR_BTNS)
         # create symbol
-        poly = cnv.create_polygon(*coords,
-                                  outline='white',
-                                  fill='white')
-        # bind all
-        cnv.bind('<Enter>',
-                 lambda _, args=[cnv, cir, poly]: onEnter(*args))
-        cnv.bind('<Leave>',
-                 lambda _, args=[cnv, cir, poly]: onExit(*args))
-        cnv.bind('<ButtonRelease-1>',
-                 lambda e, n=i: self.sendInput(e, n))
+        poly: int = cnv.create_polygon(*coords,
+                                       outline=CLR_BTNS,
+                                       fill=CLR_BTNS)
+        # bind hover/click
+        cnv.bind(sequence='<Enter>',
+                 func=lambda _: hoverEvent(CLR_BTN_HOVER))
+        cnv.bind(sequence='<Leave>',
+                 func=lambda _: hoverEvent(CLR_BTNS))
+        cnv.bind(sequence='<ButtonRelease-1>',
+                 func=lambda e, b=btn: self.sendInput(e, b))
+        # place the canvas
+        cnv.grid(column=[0, 2, 2, 4][btn],
+                 row=0)
         return cnv
 
-    def sendInput(self, event: "Event", btn: "O[int]" = None) -> None:
+    def createLabel(self, col: int, svar: StringVar) -> Label:
+        frm = Frame(master=self,
+                    height=BTN_SIZE,
+                    width=LBL_W)
+        frm.grid(column=col,
+                 row=0)
+        lbl = Label(master=frm,
+                    textvariable=svar)
+        lbl.place(x=0,
+                  rely=0.45,
+                  anchor='w')
+        return lbl
+
+    def sendInput(self, event: "Event", btn: O[int] = None) -> None:
         if isinstance(btn, int):
             if (0 <= event.x <= BTN_SIZE) and (0 <= event.y <= BTN_SIZE) and (0 <= btn <= 3):
                 if btn == 0:
                     self.spotify.win.send_keystrokes('^{LEFT}')
-                elif btn == 1 or btn == 2:
+                elif 0 < btn < 3:
                     self.spotify.win.send_keystrokes('{SPACE}')
                     self.chngToStopped() if self.isPlaying else self.chngToPlaying()
                 else:
@@ -168,42 +156,38 @@ class GUI(Tk):
             except Exception:
                 pass
 
-    def chngToStopped(self) -> None:
-        self.isPlaying = False
-        self.btns['stop'].grid_remove()
-        self.btns['play'].grid()
+    def chngBtnState(self, state: str) -> None:
+        self.isPlaying = (state == 'play')
+        self.btns[state].grid_remove()
+        self.btns['playstop'.replace(state, '')].grid()
 
-    def chngToPlaying(self) -> None:
-        self.isPlaying = True
-        self.btns['play'].grid_remove()
-        self.btns['stop'].grid()
+    def chngToStopped(self): self.chngBtnState('stop')
+    def chngToPlaying(self): self.chngBtnState('play')
 
     def stopMarquees(self) -> None:
         while self.marquees:
             thread = self.marquees.pop()
             try:
                 thread.running = False
-                thread.join()
+                if thread.is_alive():
+                    thread.join(timeout=2)
             except Exception:
                 pass
 
     def updateLabels(self) -> None:
+        def setLbl(lbl: Label, svar: StringVar) -> None:
+            lbl.place(x=0)
+            lblW = lbl.winfo_reqwidth()
+            if lblW >= LBL_W:
+                txt = svar.get()
+                svar.set(f'{txt}{SCROLL_BREAK}{txt}')
+                self.marquees.append(Marquee(lblW, lbl))
+
         self.stopMarquees()
         # set labels
-        self.trackLbl.place(x=0)
-        self.artistLbl.place(x=0)
-        # track marquee
-        trackW = self.trackLbl.winfo_reqwidth()
-        if trackW >= LBL_W:
-            txt = self.track.get()
-            self.track.set(f'{txt}{" "*20}{txt}')
-            self.marquees.append(Marquee(trackW, self.trackLbl))
-        # artist marquee
-        artistW = self.artistLbl.winfo_reqwidth()
-        if artistW >= LBL_W:
-            txt = self.artist.get()
-            self.artist.set(f'{txt}{" "*20}{txt}')
-            self.marquees.append(Marquee(artistW, self.artistLbl))
+        setLbl(self.trackLbl, self.track)
+        setLbl(self.artistLbl, self.artist)
+        # start marquees
         for thread in self.marquees:
             thread.start()
         self.update_idletasks()
@@ -211,7 +195,7 @@ class GUI(Tk):
     def updateText(self, title: str) -> None:
         try:
             art, trk = title.split(' - ', 1)
-        except Exception:
+        except ValueError:
             return
         self.artist.set(art)
         self.track.set(trk)
@@ -219,15 +203,17 @@ class GUI(Tk):
 
     def closePlayer(self) -> None:
         if self.winfo_viewable():
-            self.track.set(SHUTDOWN_TXT_LEFT)
-            self.artist.set(SHUTDOWN_TXT_RIGHT)
+            self.track.set(SHUTDOWN_TXT_L)
+            self.artist.set(SHUTDOWN_TXT_R)
+            self.update_idletasks()
             self.updateLabels()
-            sleep(2)
-            self.withdraw()
+            sleep(2.5)
             self.stopMarquees()
+            self.withdraw()
             for thread in self.threads:
                 try:
                     thread.running = False
-                    thread.join()
+                    if thread.is_alive():
+                        thread.join(timeout=2)
                 except Exception:
-                    pass
+                    continue
