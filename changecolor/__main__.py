@@ -25,20 +25,18 @@ class _main:
     def __init__(self):
         def argHelp(full: bool = True) -> str:
             insert = ('percent: int = 25\n'
-                      '    Percent by which to change the color. Integer between 1 and 100,\n'
+                      '    Percent by which to change the color. Number between 1 and 100,\n'
                       '    where 100 would change black to white or vice versa\n')
-            info = ('color: str | list[int, int, int]\n'
+            info = ('color: str | list[int, int, int] | tuple[int, int, int]\n'
                     '    The initial color. If <inputtype> is "HEX", must be a string.\n'
-                    '    Otherwise, must be a list of 3 integers\n'
+                    '    Otherwise, must be a list or tuple of 3 integers\n'
                     f'{insert if full else ""}'
-                    'inputtype: str | None = None\n'
+                    'inputtype: str = ""\n'
                     f'    The data type of the input. One of {FORMATS}.\n'
                     '    If not specified, it will be assumed to be "HEX" if <color> is\n'
-                    '    a string, else "RGB"\n'
+                    '    a string, else "RGB8"\n'
                     'returnas: str = "HEX"\n'
-                    f'    The data type to return. One of {FORMATS}\n'
-                    'bitdepth: int = 8\n'
-                    '    The color bit depth. Either 8 or 16')
+                    f'    The data type to return. One of {FORMATS}\n')
             return info
 
         self.buildParser()

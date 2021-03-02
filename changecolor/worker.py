@@ -1,38 +1,28 @@
 from .constants import *
-import colorsys as _clrsys
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from typing import Iterable, Union as U, Optional as O
+import colorsys as clrsys
+from typing import Union as U
 
 
 class Worker:
-    initConv: tuple[float, float, float]
-    col: "U[str, list[int], tuple[int]]"
+    clr: U[str, list[int], tuple[int, int, int]]
     percent: int
     intype: str
     retype: str
-    bit: int
+    hsv: list[int]
 
-    def __init__(self, c: "U[str, Iterable]", p: int, i: str, r: str, b: int):
+    def __init__(self, c, p, i: str, r: str):
         self.clr = c
         self.percent = p
         self.intype = i.upper()
         self.retype = r.upper()
-        self.bit = b
         self.validate()
 
     def validate(self) -> None:
         # percent
-        if not isinstance(self.percent, int):
-            raise TypeError('<percent> must be an integer between 1 and 100')
+        if not isinstance(self.percent, (int, float)):
+            raise TypeError('<percent> must be a number between 1 and 100')
         elif not (-100 < self.percent < 100):
             raise ValueError('<percent> must be between 1 and 100')
-        # bit
-        if not isinstance(self.bit, int):
-            raise TypeError('<bitdepth> must be 8 or 16')
-        elif self.bit not in [8, 16]:
-            raise ValueError('<bitdepth> must be 8 or 16')
         # retype
         if not isinstance(self.retype, str):
             raise TypeError(f'<returnas> must be a string, one of {FORMATS}')
@@ -43,117 +33,119 @@ class Worker:
             if isinstance(self.clr, str):
                 self.intype = HEX
             elif isinstance(self.clr, (list, tuple)):
-                self.intype = RGB
+                self.intype = RGB8
             else:
-                raise TypeError(f'<inputtype> must be one of {FORMATS}')
+                raise TypeError(
+                    f'<color> must be a string, or a list or tuple of 3 integers')
         if not isinstance(self.intype, str):
             raise TypeError(f'<inputtype> must be one of {FORMATS}')
         elif self.intype not in LST_FRM:
             raise ValueError(f'<inputtype> must be one of {FORMATS}')
-        # col
+        # clr
         if self.intype == HEX:
+            if not isinstance(self.clr, str):
+                raise TypeError(
+                    '<color> must be a string for <inputtype> "HEX"')
             self.clr = self.clr.strip(' #')
-            if len(self.clr) not in [6, 12]:
-                raise ValueError(
-                    "HEX values must have a length of 6 (8-bit) or 12 (16-bit)")
+            if len(self.clr) != 6:
+                raise ValueError('HEX values must be 6 characters long')
         elif not isinstance(self.clr, (list, tuple)):
             raise TypeError(
-                f'<color> must be a list or tuple of 3 integers if <inputtype> is "{self.intype}"')
+                f'<color> must be a list or tuple of 3 integers for <inputtype> "{self.intype}"')
         elif len(self.clr) != 3:
             raise ValueError(
-                f'<color> must be a list or tuple of 3 integers if <inputtype> is "{self.intype}"')
+                f'<color> must be a list or tuple of 3 integers for <inputtype> "{self.intype}"')
 
-    def lightness(self) -> "U[str, list]":
-        self.initConv = getattr(self, self.intype)()
-        hue, sat, val = self.initConv
-        val_adj = (val + self.percent / 100)
-        val_new = max(min(val_adj, 1), 0)
-        return self.output(hue, sat, val_new)
+    def adjust(self, v) -> float:
+        adj = (v + self.percent / 100)
+        return max(min(adj, 1), 0)
 
-    def saturation(self) -> "U[str, list]":
-        self.initConv = getattr(self, self.intype)()
-        hue, sat, val = self.initConv
-        sat_adj = (sat + self.percent / 100)
-        sat_new = max(min(sat_adj, 1), 0)
-        return self.output(hue, sat_new, val)
+    def lightness(self) -> U[str, tuple]:
+        self.hsv = getattr(self, self.intype)()
+        self.hsv[2] = self.adjust(self.hsv[2])
+        return self.output(self.hsv)
 
-    def invert(self) -> "U[str, list]":
-        self.initConv = getattr(self, self.intype)(True)
-        invRgb = [(1 - n) for n in self.initConv]
-        invHsv = _clrsys.rgb_to_hsv(*invRgb)
-        return self.output(*invHsv)
+    def saturation(self) -> U[str, tuple]:
+        self.hsv = getattr(self, self.intype)()
+        self.hsv[1] = self.adjust(self.hsv[1])
+        return self.output(self.hsv)
 
-    def HEX(self, retRgb: bool = False) -> tuple[int, int, int]:
-        newCol = list()
-        cLen = len(self.clr)
-        for i in range(0, cLen, (cLen // 3)):
-            colSlice = self.clr[i: (i + cLen // 3)]
-            newCol.append(int(colSlice, 16))
-        self.clr = newCol.copy()
-        newRgb = self.RGB(True)
-        return newRgb if retRgb else _clrsys.rgb_to_hsv(*newRgb)
+    def invert(self) -> U[str, tuple]:
+        self.hsv = getattr(self, self.intype)()
+        invRgb = [(1 - v) for v in clrsys.hsv_to_rgb(*self.hsv)]
+        invHsv = clrsys.rgb_to_hsv(*invRgb)
+        return self.output(invHsv)
 
-    def RGB(self, retRgb: bool = False) -> tuple[int, int, int]:
-        if self.bit == 8:
-            newRgb = tuple((n / 255) for n in self.clr)
-        else:
-            newRgb = tuple(((n >> 8) / 255) for n in self.clr)
-        return newRgb if retRgb else _clrsys.rgb_to_hsv(*newRgb)
+    def HEX(self) -> list[int]:
+        oldClr = self.clr
+        self.clr = list()
+        for i in range(0, 6, 2):
+            clrSlice = oldClr[i: (i + 2)]
+            self.clr.append(int(clrSlice, 16))
+        return self.RGB(255)
 
-    def HSV(self, retRgb: bool = False) -> tuple[int, int, int]:
-        x, y, z = self.clr
-        hsv = tuple((x / 360), (y / 100), (z / 100))
-        return _clrsys.hsv_to_rgb(*hsv) if retRgb else hsv
+    def RGB8(self): return self.RGB(255)
+    def RGB16(self): return self.RGB(65535)
 
-    def HLS(self, retRgb: bool = False) -> tuple[int, int, int]:
-        x, y, z = self.clr
-        hls = [(x / 360), (y / 100), (z / 100)]
-        newRgb = _clrsys.hls_to_rgb(*hls)
-        return newRgb if retRgb else _clrsys.rgb_to_hsv(*newRgb)
+    def RGB(self, div: int) -> list[int]:
+        newRgb = tuple((v / div) for v in self.clr)
+        return list(clrsys.rgb_to_hsv(*newRgb))
 
-    def output(self, *newVal: int) -> "U[str, list]":
+    def HSV(self) -> list[int]:
+        h, s, v = self.clr
+        return [(h / 360), (s / 100), (v / 100)]
+
+    def HLS(self) -> list[int]:
+        h, l, s = self.clr
+        hls = tuple((h / 360), (l / 100), (s / 100))
+        newRgb = clrsys.hls_to_rgb(*hls)
+        return list(clrsys.rgb_to_hsv(*newRgb))
+
+    def output(self, newHsv: list[int]) -> U[str, tuple]:
+        R = round
         if self.retype == HEX:
-            newRgb = _clrsys.hsv_to_rgb(*newVal)
-            newHex = [format(round(255*n), '02x') for n in newRgb]
-            out = f'#{"".join(newHex)}'
-        elif self.retype == RGB:
-            newRgb = _clrsys.hsv_to_rgb(*newVal)
-            out = [round(255 * n) for n in newRgb]
+            newRgb = clrsys.hsv_to_rgb(*newHsv)
+            newHex = tuple(f'{R(255 * v):02x}' for v in newRgb)
+            out = f"#{''.join(newHex)}"
+        elif self.retype in (RGB8, RGB16):
+            newRgb = clrsys.hsv_to_rgb(*newHsv)
+            n = 255 if self.retype == RGB8 else 65535
+            out = tuple(R(n * v) for v in newRgb)
         else:
             if self.retype == HLS:
-                newRgb = _clrsys.hsv_to_rgb(*newVal)
-                a, b, c = _clrsys.rgb_to_hls(*newRgb)
+                newRgb = clrsys.hsv_to_rgb(*newHsv)
+                a, b, c = clrsys.rgb_to_hls(*newRgb)
             else:
-                a, b, c = newVal
-            out = [round(n) for n in [(360 * a), (100 * b), (100 * c)]]
+                a, b, c = newHsv
+            out = tuple(R(360 * a), R(100 * b), R(100 * c))
         return out
 
 
-def lighten(color: "U[str, list[int], tuple[int]]", percent: int = 25, inputtype: str = "", returnas: str = HEX, bitdepth: int = 8):
+def lighten(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
     """Lightens the given color"""
-    work = Worker(color, percent, inputtype, returnas, bitdepth)
+    work = Worker(color, percent, inputtype, returnas)
     return work.lightness()
 
 
-def darken(color: "U[str, list[int], tuple[int]]", percent: int = 25, inputtype: str = "", returnas: str = HEX, bitdepth: int = 8):
+def darken(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
     """Darkens the given color"""
-    work = Worker(color, -percent, inputtype, returnas, bitdepth)
+    work = Worker(color, -percent, inputtype, returnas)
     return work.lightness()
 
 
-def saturate(color: "U[str, list[int], tuple[int]]", percent: int = 25, inputtype: str = "", returnas: str = HEX, bitdepth: int = 8):
+def saturate(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
     """Increases the saturation of the given color"""
-    work = Worker(color, percent, inputtype, returnas, bitdepth)
+    work = Worker(color, percent, inputtype, returnas)
     return work.saturation()
 
 
-def desaturate(color: "U[str, list[int], tuple[int]]", percent: int = 25, inputtype: str = "", returnas: str = HEX, bitdepth: int = 8):
+def desaturate(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
     """Decreases the saturation of the given color"""
-    work = Worker(color, -percent, inputtype, returnas, bitdepth)
+    work = Worker(color, -percent, inputtype, returnas)
     return work.saturation()
 
 
-def invert(color: "U[str, list[int], tuple[int]]", inputtype: str = "", returnas: str = HEX, bitdepth: int = 8):
+def invert(color: U[str, list[int], tuple[int]], inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
     """Inverts the given color"""
-    work = Worker(color, 0, inputtype, returnas, bitdepth)
+    work = Worker(color, 0, inputtype, returnas)
     return work.invert()

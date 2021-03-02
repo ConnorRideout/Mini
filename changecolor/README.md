@@ -84,5 +84,24 @@ from changecolor import . . .
                 </dl>
             </td>
         </tr>
+        <tr>
+            <td align="center">3.0</td>
+            <td>
+                <dl>
+                    <dt>new</dr>
+                    <ul>
+                        <li>changed how bitdepth works</li>
+                        <li>changed required params</li>
+                        <li>overhauled functions</li>
+                        <li>updated help</li>
+                    </ul>
+                    <dt>bugfixes</dt>
+                    <ul>
+                        <li>fixed error with bitdepth</li>
+                        <li>fixed input errors</li>
+                    </ul>
+                </dl>
+            </td>
+        </tr>
     </tbody>
 </table>
