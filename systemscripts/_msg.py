@@ -1,11 +1,16 @@
-from os import system as os_sys
+from subprocess import Popen
 
 
-def _show_info(win, msgType, name, output):
+def _show_info(win: bool, msgType: str, name: str, msg: str):
     if win:
-        info = "{} {}:".format(name, msgType)
-        output = "\n".join(["="*25, info, "="*25, output])
-        os_sys("""start "" powershell -command "write-host \\"{}\\""; pause""".format(
-            output.replace('\n', '`n')))
+        info = f"{name} {msgType}:"
+        output = (f"\"{'='*25}`n"
+                  f"{info}`n"
+                  f"{'='*25}`n"
+                  f"{msg}`n`n"
+                  "Press <return> to close\"")
+        Popen(['powershell', 'Read-Host',
+               output.replace('\n', '`n')],
+              creationflags=16)
     else:
-        print(output)
+        print(msg)
