@@ -1,21 +1,32 @@
 from tkinter import Tk, Frame, Label, Spinbox, LabelFrame as LFrame, messagebox as mbox
-from os import listdir as os_listdir, rename as os_rename, path as os_path
 from scrolledframe import ScrolledFrame as SFrame
 from tkinter.ttk import Button, Separator, Style
+from re import match as re_match
 from changecolor import lighten
 from typing import Union as U
+from pathlib import Path
 
 from .constants import *
 
 
+rndto = 1
+
+
+def zerofrmt(num: U[str, int]) -> str:
+    return f'{int(num):0{rndto}d}'
+
+
 class GUI(Tk):
-    data: dict[str, dict[str, U[Frame, Spinbox, Label, str]]]
+    data: dict[str, dict[str, U[Frame, Spinbox, Label, Path, str]]]
+    cwd: Path
     defBg: str
     litBg: str
     checkValid: tuple[str, str]
     curRow: int
     scrFrm: SFrame
-    maxNum: int
+    lastRow: int
+    maxRow: int
+    lblRow: int
 
     def __init__(self):
         Tk.__init__(self)
@@ -24,21 +35,28 @@ class GUI(Tk):
                       f'x{HEIGHT}'
                       f'+{(self.winfo_screenwidth() - WIDTH) // 2}'
                       f'+{(self.winfo_screenheight() - HEIGHT) // 2}')
+        Style().configure('TSeparator', background='red')
+        self.option_add('*font', FONT)
+        self.bind_all(sequence='<ButtonRelease-1>',
+                      func=lambda e: e.widget.focus_set())
+        raise Exception
+        self.after_idle(self.start_main)
+
+    def start_main(self) -> None:
         # init vars
         self.data = dict()
+        self.cwd = Path(PATH)
         self.defBg = self.cget('bg')
         self.litBg = lighten(color=self.winfo_rgb(self.defBg),
                              percent=5,
-                             inputtype='RGB',
-                             bitdepth=16)
+                             inputtype='RGB16')
         self.checkValid = (self.register(self.validateRange), '%P')
         self.curRow = int()
-        # build window
         self.createFrame()
         self.insertData()
 
     def validateRange(self, val: str) -> bool:
-        if not val or (val.isdigit() and 0 < int(val) <= self.maxNum):
+        if not val or (val.isdigit() and 0 < int(val) <= self.maxRow):
             return True
         else:
             return False
@@ -76,34 +94,54 @@ class GUI(Tk):
         self.scrFrm.columnconfigure(0, weight=1)
 
     def insertData(self) -> None:
-        folders = [f for f in os_listdir() if os_path.isdir(f)]
-        lastRow = int()
-        new: list[str] = list()
+        global rndto
+        maxNum = int()
+        new: list[Path] = list()
+        nfols: dict[str, tuple[Path, str]] = dict()
+        folders = [f for f in self.cwd.iterdir() if f.is_dir()]
         for fol in folders:
-            n = fol[:2]
-            if n.isdigit():
-                lastRow = max(lastRow, (int(n) + 1))
-                self.data[n] = dict(name=fol[2:].lstrip('. '),
-                                    path=fol)
+            m = re_match(r'(\d+)[\W]*(.+)$', fol.name)
+            if m:
+                maxNum = max(maxNum, int(m.group(1)))
+                nfols[m.group(1)] = (fol, m.group(2))
             else:
                 new.append(fol)
-        self.maxNum = max(len(folders), (lastRow - 1))
-        Style().configure('TSeparator', background='red')
-        for n in range(len(folders)):
+
+        folct = len(folders)
+        self.maxRow = max(maxNum, folct)
+        rndto = len(str(self.maxRow))
+        self.lblRow = (self.maxRow + 1)
+        self.lastRow = (self.lblRow + folct)
+
+        newLbl = Label(master=self.scrFrm,
+                       text="Non-enumerated Folders:")
+        newLbl.grid(column=0,
+                    row=self.lblRow,
+                    pady=((PAD * 5), (PAD // 2)),
+                    sticky='nsew')
+        nLbl = Label(master=self.scrFrm,
+                     text="None")
+        nLbl.grid(column=0,
+                  row=self.lastRow,
+                  sticky='nsew')
+        for n in range(folct):
             s = Separator(master=self.scrFrm,
                           orient='horizontal')
             s.grid(column=0,
                    row=(n + 1),
                    sticky='ew',
                    pady=3)
-        for num, kwargs in self.data.items():
-            self.fillInfo(num, **kwargs)
+        for num, (fol, name) in nfols.items():
+            self.fillInfo(curRow=int(num),
+                          path=fol,
+                          name=name)
         for i, fol in enumerate(new):
-            num = f'{(lastRow + i):02d}'
-            self.fillInfo(num, fol, fol, False)
+            num = (self.lastRow - i)
+            self.fillInfo(curRow=num,
+                          path=fol)
 
-    def fillInfo(self, rowLbl: str, name: str, path: str, numbered: bool = True) -> None:
-        curRow = int(rowLbl)
+    def fillInfo(self, curRow: int, path: Path, name: str = None) -> None:
+        rowLbl = zerofrmt(curRow)
         bg = self.litBg if (curRow % 2) else self.defBg
         # create container
         frm = Frame(master=self.scrFrm,
@@ -118,29 +156,32 @@ class GUI(Tk):
         sbox = Spinbox(master=frm,
                        width=3,
                        bg=bg,
-                       font=FONT,
-                       format='%02.0f',
+                       format=(f'%0{rndto}d' if rndto > 1 else ''),
                        takefocus=False,
                        from_=1,
-                       to=self.maxNum,
+                       to=self.lblRow,
+                       increment=-1,
+                       repeatdelay=(10**5),
                        validate='key',
                        validatecommand=self.checkValid)
         sbox.grid(column=0,
                   row=0)
 
-        def commit(_=None, f=frm, s=sbox): self.updateList(f, s)
-        def cancel(_=None, f=frm, s=sbox): self.cancelChange(f, s)
-        sbox.config(command=commit)
+        def btnpress(f=frm, s=sbox): self.updateList(f, s, True)
+        def commit(_, f=frm, s=sbox): self.updateList(f, s)
+        def cancel(_, f=frm, s=sbox): self.cancelChange(f, s)
+
+        sbox.configure(command=btnpress)
         sbox.delete(0, 'end')
-        if numbered:
+        if name:
             sbox.insert(0, rowLbl)
+        else:
+            name = path.name
         sbox.bind('<Return>', commit)
-        sbox.bind('<FocusOut>', cancel)
         sbox.bind('<Escape>', cancel)
         # create name label
         lbl = Label(master=frm,
                     text=name,
-                    font=FONT,
                     bg=bg)
         lbl.grid(column=1,
                  row=0,
@@ -149,63 +190,107 @@ class GUI(Tk):
         self.data[rowLbl] = dict(frm=frm,
                                  sbox=sbox,
                                  lbl=lbl,
-                                 name=name,
-                                 path=path)
+                                 path=path,
+                                 name=name)
 
-    @staticmethod
-    def cancelChange(frm: Frame, sbox: Spinbox) -> None:
-        oldRow = f"{frm.grid_info()['row']:02d}"
+    def cancelChange(self, frm: Frame, sbox: Spinbox) -> None:
+        self.focus_set()
+        oldRow = zerofrmt(frm.grid_info()['row'])
         if oldRow != sbox.get():
             sbox.delete(0, 'end')
             sbox.insert(0, oldRow)
 
-    def updateList(self, frm: Frame, sbox: Spinbox) -> None:
-        # get spinbox value
-        num = sbox.get()
-        if not num:
-            self.cancelChange(frm, sbox)
-            return
-        elif len(num) == 1:
-            sbox.insert(0, '0')
-        # get info
-        moveTo = int(num)
+    def updateList(self, frm: Frame, sbox: Spinbox, btn: bool = False) -> None:
+        # get data
         start = frm.grid_info()['row']
-        oldInfo = self.data.pop(f'{start:02d}')
-        # move
-        curRow = f'{moveTo:02d}'
-        if curRow in self.data:
-            nmin = min(start, moveTo)
-            nmax = max(start, moveTo)
-            add = 1 if moveTo < start else -1
+        oldInfo = self.data.pop(zerofrmt(start))
+        # get spinbox value
+        moveToLbl = str(sbox.get())
+        if moveToLbl == zerofrmt(start):
+            return
+        elif not moveToLbl:
+            if start < self.lblRow:
+                start = (self.lblRow + 1)
+                moveToLbl = zerofrmt(self.lastRow)
+                self.focus_set()
+            else:
+                return
+        elif btn and int(moveToLbl) == self.lblRow:
+            sbox.delete(0, 'end')
+            start = (self.lblRow + 1)
+            moveToLbl = zerofrmt(self.lastRow)
+            self.after(0, self.focus_set)
+        elif btn and abs(start - int(moveToLbl)) > 1:
+            self.moveInterim(start, zerofrmt(self.lblRow + 1), True)
+            start = 0
+            moveToLbl = zerofrmt(self.maxRow)
+            sbox.delete(0, 'end')
+            sbox.insert(0, moveToLbl)
+        elif not btn:
+            if len(moveToLbl) != rndto:
+                moveToLbl = zerofrmt(moveToLbl)
+                sbox.delete(0, 'end')
+                sbox.insert(0, moveToLbl)
+            if start == self.lastRow:
+                self.moveInterim(start, zerofrmt(self.lblRow + 1), True)
+        sbox.selection_range(0, 'end')
+        if moveToLbl == zerofrmt(start):
+            return
+        if moveToLbl in self.data:
+            self.moveInterim(start, moveToLbl, False)
+        moveToRow = int(moveToLbl)
+        bg = self.litBg if (moveToRow % 2) else self.defBg
+        frm.grid(row=moveToRow)
+        frm.configure(bg=bg)
+        sbox.configure(bg=bg)
+        oldInfo['lbl'].configure(bg=bg)
+        self.data[moveToLbl] = oldInfo
+
+    def moveInterim(self, start: int, moveToLbl: str, updateNon: bool):
+        moveToRow = int(moveToLbl)
+        nmin = min(start, moveToRow)
+        nmax = max(start, moveToRow)
+        add = 1 if moveToRow < start else -1
+        if updateNon:
+            change = {n: self.data.pop(n) for n in list(self.data)
+                      if nmin <= int(n) <= nmax}
+            for num, info in change.items():
+                self.move(add, num, info)
+        else:
             change = {n: v for n, v in self.data.items()
                       if nmin <= int(n) <= nmax}
-            while curRow in change:
-                d = change[curRow]
-                newRow = (int(curRow) + add)
-                curRow = f'{newRow:02d}'
-                bg = self.litBg if (newRow % 2) else self.defBg
-                # update frame
-                d['frm'].grid(row=newRow)
-                d['frm'].config(bg=bg)
-                # update spinbox
-                d['sbox'].delete(0, 'end')
-                d['sbox'].insert(0, curRow)
-                d['sbox'].config(bg=bg)
-                # update label
-                d['lbl'].config(bg=bg)
-                self.data[curRow] = d
-        bg = self.litBg if (moveTo % 2) else self.defBg
-        frm.grid(row=moveTo)
-        frm.config(bg=bg)
-        sbox.config(bg=bg)
-        oldInfo['lbl'].config(bg=bg)
-        self.data[f'{moveTo:02d}'] = oldInfo
+            curRowLbl = moveToLbl
+            self.data.pop(curRowLbl, None)
+            while curRowLbl in change:
+                curRowLbl = self.move(add, curRowLbl, change.get(curRowLbl))
+
+    def move(self, add: int, rowLbl: str, d: dict[str, U[Frame, Spinbox, Label, Path, str]]) -> str:
+        newRow = (int(rowLbl) + add)
+        newLbl = zerofrmt(newRow)
+        bg = self.litBg if (newRow % 2) else self.defBg
+        # update frame
+        d['frm'].grid(row=newRow)
+        d['frm'].configure(bg=bg)
+        # update spinbox
+        if d['sbox'].get():
+            d['sbox'].delete(0, 'end')
+            d['sbox'].insert(0, newLbl)
+        d['sbox'].configure(bg=bg)
+        # update label
+        d['lbl'].configure(bg=bg)
+        self.data[newLbl] = d
+        return newLbl
 
     def submit(self):
         for row, info in self.data.items():
-            oldPath: str = info['path']
-            newPath = f"{info['sbox'].get()}. {info['name']}"
-            if oldPath != newPath:
-                os_rename(oldPath, newPath)
+            path: Path = info['path']
+            num = info['sbox'].get()
+            newName = f"{num}{SEPARATOR if num else ''}{info['name']}"
+            if path.name != newName:
+                newPath = path.rename(path.with_name(newName))
                 self.data[row]['path'] = newPath
-        mbox.showinfo("Complete", "Files have been successfully renamed")
+        mbox.showinfo("Complete", "Files have been successfully renamed.")
+
+    def printdata(self):
+        pdict = {k: v['name'] for k, v in self.data.items()}
+        print(pdict)
