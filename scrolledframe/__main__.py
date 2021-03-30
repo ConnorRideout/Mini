@@ -1,106 +1,158 @@
-"""This ScrolledFrame Widget behaves like a Frame widget but also
-has vertical and/or horizontal scroll bars. The bars can be on
-either edge of the widget, and can be set to disappear
-automatically when not needed.
+from tkinter import Label, Button, Frame
+from textwrap import dedent
 
-The Class consists of an outer Frame (data member: container),
-a Canvas (data member: scrollCanvas), up to two Scrollbars (data
-member: vScrbar/hScrbar), and an inner Frame (class).
-The outer Frame contains the Canvas and Scrollbar widgets. The
-Canvas creates a window from the inner Frame widget.
-Configuration options are passed to the inner Frame widget,
-along with most method calls; however, geometry methods are
-redirected to the outer Frame widget.
-
-The Class also has a special function 'redraw' which will update
-the Widget's scroll area and hide/unhide the scrollbars (if set).
-
-The constructor accepts all Frame widget keyword arguments, plus
-the following immutable arguments:
--scrollbars (type:string; default='SE')
-   Where to put the scrollbars (e/g 'SR'=South and Right)
-   String must be 1 or 2 characters (NSEW and/or TBRL)
--padding (type:integer or list of integers; default=[3,0,0,3])
-   Padding between the outer Frame/Scrollbars and the
-   inner Frame. <all> or [NS,EW] or [top,right,bottom,left]
--dohide (type:boolean; default=True)
-   Whether to hide the scrollbars when not needed
--doupdate (type:boolean; default=True)
-   Whether to automatically redraw the Widget whenever it
-   changes size. Setting to False may improve performance
--scrollspeed (type:integer; default=2)
-   The number of lines to scroll by per mousewheel scroll.
-   Setting to 0 disables mousewheel scrolling
-"""
+try:
+    from .frame import ScrolledFrame
+except ImportError:
+    from pathlib import Path
+    from subprocess import run
+    pth = Path(__file__).parent
+    run(['py', '-m', pth.name], cwd=pth.parent)
+    raise SystemExit
 
 
-def example() -> None:
-    try:
-        from . import ScrolledFrame
-    except ImportError:
-        from __init__ import ScrolledFrame
-    from tkinter import Label, Button
+class Example(ScrolledFrame):
+    lbl: Label
+    hLbls: list[Label]
+    vLbls: list[Label]
+    curCol: int
+    curRow: int
+    rdBtn: Button
+    rHzBtn: Button
+    rVtBtn: Button
 
-    sframe = ScrolledFrame()
-    lbl = Label(master=sframe,
-                text='Start',
-                font='Calibri 12',
-                justify='left')
-    lbl.grid()
-    curCol = 1
-    curRow = 1
-    rLbl = Label(master=sframe,
-                 text='HorzLabel1',
-                 font='Calibri 12')
-    rLbl.grid(column=curCol,
-              row=0)
-    bLbl = Label(master=sframe,
-                 text='VertLabel1',
-                 font='Calibri 12')
-    bLbl.grid(column=0,
-              row=curRow)
+    def __init__(self):
+        ScrolledFrame.__init__(self)
+        self.grid(column=0,
+                  columnspan=2,
+                  row=1,
+                  rowspan=2,
+                  sticky='nsew')
+        self.option_add('*font', 'Ebrima 12')
 
-    def b1cmd() -> None:
-        lbl.config(text=__doc__)
+        self.container.master.columnconfigure(0, weight=1)
+        self.container.master.rowconfigure(1, weight=1)
 
-    def b2cmd() -> None:
-        nonlocal curCol
-        curCol += 1
-        txt = f'HorzLabel{curCol}'
-        rLbl = Label(master=sframe,
-                     text=txt,
-                     font='Calibri 12')
-        rLbl.grid(column=curCol,
+        self.lbl = Label(master=self,
+                         text='Start',
+                         justify='left',
+                         relief='ridge')
+        self.lbl.grid(sticky='nsew')
+        self.hLbls = list()
+        self.vLbls = list()
+        self.curCol = 1
+        self.curRow = 1
+
+        rLbl = Label(master=self,
+                     text='Horizontal1')
+        rLbl.grid(column=self.curCol,
                   row=0)
-        sframe.redraw()
 
-    def b3cmd() -> None:
-        nonlocal curRow
-        curRow += 1
-        txt = f'VertLabel{curRow}'
-        bLbl = Label(master=sframe,
-                     text=txt,
-                     font='Calibri 12')
+        bLbl = Label(master=self,
+                     text='Vertical1')
         bLbl.grid(column=0,
-                  row=curRow)
-        sframe.redraw()
+                  row=self.curRow)
 
-    b1 = Button(text='View readme',
-                command=b1cmd)
-    b1.pack(side='top')
-    b2 = Button(text='Add Label Right',
-                command=b2cmd)
-    b2.pack(side='right')
-    b3 = Button(text='Add Label Bottom',
-                command=b3cmd)
-    b3.pack(side='bottom')
+        self.rdBtn = Button(text="View readme",
+                            command=self.addReadme)
+        self.rdBtn.grid(column=0,
+                        row=0)
 
-    sframe.pack(expand=True,
-                fill='both',
-                side='top')
-    sframe.update_idletasks()
-    sframe.mainloop()
+        hzFrm = Frame(bd=1,
+                      relief='ridge')
+        hzFrm.grid(column=2,
+                   row=1)
+        hzLbl = Label(master=hzFrm,
+                      text="Right Labels:")
+        hzLbl.grid(column=0,
+                   columnspan=2,
+                   row=0)
+        aHzBtn = Button(master=hzFrm,
+                        text="Add",
+                        command=self.addHorz)
+        aHzBtn.grid(column=0,
+                    row=1)
+        self.rHzBtn = Button(master=hzFrm,
+                             text="Remove",
+                             command=self.remHorz,
+                             state='disabled')
+        self.rHzBtn.grid(column=1,
+                         row=1)
+
+        vtFrm = Frame(bd=1,
+                      relief='ridge')
+        vtFrm.grid(column=0,
+                   row=3)
+        vtLbl = Label(master=vtFrm,
+                      text="Bottom Labels:")
+        vtLbl.grid(column=0,
+                   columnspan=2,
+                   row=0)
+        aVtBtn = Button(master=vtFrm,
+                        text="Add",
+                        command=self.addVert)
+        aVtBtn.grid(column=0,
+                    row=1)
+        self.rVtBtn = Button(master=vtFrm,
+                             text="Remove",
+                             command=self.remVert,
+                             state='disabled')
+        self.rVtBtn.grid(column=1,
+                         row=1)
+
+        self.master.mainloop()
+
+    def addReadme(self):
+        self.rdBtn.config(text="Hide readme",
+                          command=self.remReadme)
+        self.lbl.config(text=(f'{ScrolledFrame.__doc__}\n'
+                              f'{dedent(ScrolledFrame.__init__.__doc__)}'))
+        self.redraw()
+
+    def remReadme(self):
+        self.rdBtn.config(text="Show readme",
+                          command=self.addReadme)
+        self.lbl.config(text='Start')
+        self.redraw()
+
+    def addHorz(self) -> None:
+        self.curCol += 1
+        txt = f'Horizontal{self.curCol}'
+        rLbl = Label(master=self,
+                     text=txt)
+        rLbl.grid(column=self.curCol,
+                  row=0)
+        self.hLbls.append(rLbl)
+        self.redraw()
+        self.rHzBtn.config(state='normal')
+
+    def remHorz(self) -> None:
+        if self.hLbls:
+            self.hLbls.pop().destroy()
+            self.curCol -= 1
+            self.redraw()
+            if not self.hLbls:
+                self.rHzBtn.config(state='disabled')
+
+    def addVert(self) -> None:
+        self.curRow += 1
+        txt = f'Vertical{self.curRow}'
+        bLbl = Label(master=self,
+                     text=txt)
+        bLbl.grid(column=0,
+                  row=self.curRow)
+        self.vLbls.append(bLbl)
+        self.redraw()
+        self.rVtBtn.config(state='normal')
+
+    def remVert(self) -> None:
+        if self.vLbls:
+            self.vLbls.pop().destroy()
+            self.curRow -= 1
+            self.redraw()
+            if not self.vLbls:
+                self.rVtBtn.config(state='disabled')
 
 
 if __name__ == "__main__":
-    example()
+    Example()

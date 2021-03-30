@@ -1,62 +1,95 @@
-# Scrolled Frame
+# [Scrolled Frame](https://github.com/Cryden13/Python/tree/main/scrolledframe)
 
-This ScrolledFrame Widget behaves like a tk.Frame widget but also has vertical  
-and/or horizontal scroll bars. The bars can be on either edge of the widget,  
-and can be set to disappear automatically when not needed.
+This widget behaves like a tkFrame widget with scrollbars.
+
+The scrollbars can be on any 2 edges of the widget, and can automatically
+disappear when not needed. Configuration options are passed to the
+`class` widget, along with most method calls; however, geometry methods
+are redirected to the `container` widget.
 
 ## Usage
 
-- `ScrolledFrame` ( master [, scrollbars, padding, dohide, doupdate, scrollspeed, **kwargs])
+`ScrolledFrame`( [master, scrollbars, padding, dohide, doupdate, scrollspeed, **kwargs] )
 
-  The constructor accepts all tk.Frame widget keyword arguments, plus the following
-  special immutable arguments:
+## Parameters
 
-## Special Arguments
+1. ### `master` _(optional)_
 
-### scrollbars
+    **tkWidget** _(default=tkTk)_  
+    The parent widget
 
-1. ### `scrollbars` _(optional)_
+2. ### `scrollbars` _(optional)_
 
    **String** _(default="SE")_  
-   Where to put the scrollbars (e/g "SR"=South and Right edges).  
-   Must be with 1 or 2 characters.
+   Where to put the scrollbars
 
-2. ### `padding` _(optional)_
+3. ### `padding` _(optional)_
 
-   **Integer OR list of integers** _(default=[3,0,0,3])_  
-   Padding between the outer tk.Frame/Scrollbars and the inner tk.Frame.  
-   One of: int(pad_all) *OR* list(pad_NS, pad_EW) *OR* list(pad_top, pad_right, pad_bottom, pad_left)
+   **Integer OR sequence of integers** _(default=(3,0,0,3))_  
+   Padding around the scroll_canvas widge
 
-3. ### `dohide` _(optional)_
+4. ### `dohide` _(optional)_
 
    **Boolean** _(default=True)_  
-   Whether to hide the scrollbars when not needed.
+   Whether to hide the scrollbars when not needed
 
-4. ### `doupdate` _(optional)_
+5. ### `doupdate` _(optional)_
 
    **Boolean** _(default=True)_  
-   Whether to automatically redraw the Widget whenever it changes size.  
-   Setting to False may improve performance.
+   Whether to automatically redraw the widget whenever it's resized
 
-5. ### `scrollspeed` _(optional)_
+6. ### `scrollspeed` _(optional)_
 
    **Integer** _(default=2)_  
-   The number of lines to scroll by per mousewheel scroll.  
-   Setting to 0 disables mousewheel scrolling
+   The number of lines to scroll by. 0 disables mousewheel scrolling
 
-## Accessible Data Members
+7. ### `**kwargs` _(optional)_
 
-- **Outer tk.Frame** _(name=container)_
-- **Scrollbars** _(name=vScrbar & hScrbar)_
-- **Canvas** _(name=scrollCanvas)_
+    **Dictionary** _(default=None)_  
+    Any additional tkFrame parameters
 
-## Options and Methods
+## Attributes
 
-Configuration options are passed to the inner tk.Frame widget, along with most  
-method calls; however, geometry methods are redirected to the outer Frame widget.  
+- ### `container` **: tkFrame**
 
-The Class also has a special function `redraw` which will update the Widget's  
-scroll area and hide/unhide the scrollbars (if set).
+    The outermost widget. Contains the `scroll_canvas`, `scrollbar_v`, and
+    `scrollbar_h` widgets
+
+- ### `scroll_canvas` **: tkCanvas**
+
+    The Canvas widget that allows scrolling. Contains the `class` widget
+
+- ### `scrollbar_v` **: tkScrollbar**
+
+    The vertical Scrollbar widget
+
+- ### `scrollbar_h` **: tkScrollbar**
+
+    The horizontal Scrollbar widget
+
+- ### `<class>` **: tkFrame**
+
+    The Frame widget that will hold all child widgets
+
+- ### `dohide` **: bool**
+
+    Whether to hide the scrollbars when not needed
+
+- ### `doupdate` **: bool**
+
+    Whether to automatically redraw the widget whenever it's resized
+
+- ### `scrollspeed` **: int**
+
+    The number of lines to scroll by. 0 disables mousewheel scrolling
+
+## Methods
+
+- ### `redraw() -> None`
+
+    Updates the widget's scroll-area and (un)hide the scrollbars
+
+- ### Any `tkFrame` methods
 
 ## Changelog
 
@@ -153,6 +186,24 @@ scroll area and hide/unhide the scrollbars (if set).
                     <dt>bugfixes</dt>
                     <ul>
                         <li>fixed redraw error</li>
+                    </ul>
+                </dl>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">2.3</td>
+            <td>
+                <dl>
+                    <dt>new</dt>
+                    <ul>
+                        <li>added more notation</li>
+                        <li>made errors more verbose</li>
+                        <li>made more attributes available</li>
+                    </ul>
+                    <dt>bugfixes</dt>
+                    <ul>
+                        <li>stopped excessive redraws</li>
+                        <li>fixed 'destroy' method</li>
                     </ul>
                 </dl>
             </td>
