@@ -1,6 +1,7 @@
-from .constants import *
-import colorsys as clrsys
 from typing import Union as U
+import colorsys as clrsys
+
+from .constants import *
 
 
 class Worker:
@@ -105,7 +106,7 @@ class Worker:
         R = round
         if self.retype == HEX:
             newRgb = clrsys.hsv_to_rgb(*newHsv)
-            newHex = tuple(f'{R(255 * v):02x}' for v in newRgb)
+            newHex = (f'{R(255 * v):02x}' for v in newRgb)
             out = f"#{''.join(newHex)}"
         elif self.retype in (RGB8, RGB16):
             newRgb = clrsys.hsv_to_rgb(*newHsv)
@@ -122,30 +123,83 @@ class Worker:
 
 
 def lighten(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
-    """Lightens the given color"""
+    """\
+    Parameters
+    ----------
+    color : str | sequence[int, int, int]
+        The initial color
+    percent : int, optional (default is 25)
+        Percent by which to change the color. Must be an integer between 1 and 100
+    inputtype : str, optional (default is "HEX" or "RGB8")
+        The data type of the input. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    returnas : str, optional (default is "HEX")
+        The data type to return. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    """
     work = Worker(color, percent, inputtype, returnas)
     return work.lightness()
 
 
 def darken(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
-    """Darkens the given color"""
+    """\
+    Parameters
+    ----------
+    color : str | sequence[int, int, int]
+        The initial color
+    percent : int, optional (default is 25)
+        Percent by which to change the color. Must be an integer between 1 and 100
+    inputtype : str, optional (default is "HEX" or "RGB8")
+        The data type of the input. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    returnas : str, optional (default is "HEX")
+        The data type to return. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    """
     work = Worker(color, -percent, inputtype, returnas)
     return work.lightness()
 
 
 def saturate(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
-    """Increases the saturation of the given color"""
+    """\
+    Parameters
+    ----------
+    color : str | sequence[int, int, int]
+        The initial color
+    percent : int, optional (default is 25)
+        Percent by which to change the color. Must be an integer between 1 and 100
+    inputtype : str, optional (default is "HEX" or "RGB8")
+        The data type of the input. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    returnas : str, optional (default is "HEX")
+        The data type to return. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    """
     work = Worker(color, percent, inputtype, returnas)
     return work.saturation()
 
 
 def desaturate(color: U[str, list[int], tuple[int]], percent: int = 25, inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
-    """Decreases the saturation of the given color"""
+    """\
+    Parameters
+    ----------
+    color : str | sequence[int, int, int]
+        The initial color
+    percent : int, optional (default is 25)
+        Percent by which to change the color. Must be an integer between 1 and 100
+    inputtype : str, optional (default is "HEX" or "RGB8")
+        The data type of the input. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    returnas : str, optional (default is "HEX")
+        The data type to return. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    """
     work = Worker(color, -percent, inputtype, returnas)
     return work.saturation()
 
 
 def invert(color: U[str, list[int], tuple[int]], inputtype: str = "", returnas: str = HEX) -> U[str, tuple[int, int, int]]:
-    """Inverts the given color"""
+    """\
+    Parameters
+    ----------
+    color : str | sequence[int, int, int]
+        The initial color
+    inputtype : str, optional (default is "HEX" or "RGB8")
+        The data type of the input. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    returnas : str, optional (default is "HEX")
+        The data type to return. One of "HEX", "RGB8", "RGB16", "HSV", or "HLS"
+    """
     work = Worker(color, 0, inputtype, returnas)
     return work.invert()
