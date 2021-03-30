@@ -1,10 +1,10 @@
 from threading import Thread
 
 from .lib.constants import *
+from typing import Callable as C
 
 if TYPE_CHECKING:
     from .player import GUI
-    from typing import Callable as C
 
 
 class WatchUpdate(Thread):

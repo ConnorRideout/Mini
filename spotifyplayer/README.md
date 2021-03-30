@@ -1,18 +1,18 @@
-# Spotify Player
+# [Spotify Player](https://github.com/Cryden13/Python/tree/main/spotifyplayer)
 
 This is a small app that places a miniplayer on the Windows taskbar for spotify
 
 ## Usage
 
-Compile the ahk file. Set the variables in lib\constants.py to the proper values, then run  
+Compile the ahk file. Set the variables in `lib\constants.py` to the proper values, then run the compiled  
 `SpotifyAHK.exe` once. Afterward, the player should automatically start when the Spotify shortcut is used
 
 ## Explanation of Variables
 
 ### Path Variables
 
-- **SPOTIFY_EXE:** the path to the Spotify executable. The default location is `%appdata%\Spotify\Spotify.exe`
-- **SPOTIFY_AHK:** the path to SpotifyAHK.exe. Should be in the same directory as SpotifyPlayer.py unless the ahk file was edited
+- **SPOTIFY_EXE:** the path to the Spotify executable. The default location is %AppData%/Spotify/Spotify.exe
+- **SPOTIFY_AHK:** the path to SpotifyAHK.exe. Should be in the same directory as `SpotifyPlayer.py` unless the ahk file was edited
 - **SPOTIFY_LINK:** the path to either the pinned taskbar lnk file or the start menu lnk file
   - taskbar: `%appdata%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\Spotify.lnk`
   - start: `%appdata%\Microsoft\Windows\Start Menu\Programs\Spotify\Spotify.lnk`

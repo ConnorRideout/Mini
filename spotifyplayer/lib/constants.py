@@ -1,4 +1,4 @@
-from win32con import SWP_ASYNCWINDOWPOS, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW
+from win32con import SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW
 from win32api import GetMonitorInfo, MonitorFromPoint
 from typing import TYPE_CHECKING, Optional as O
 from collections import OrderedDict as oDict

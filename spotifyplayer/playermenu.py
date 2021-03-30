@@ -1,6 +1,6 @@
 from fileinput import input as fileinput
 from tkinter import Toplevel, Menu
-from os import path as os_path
+from pathlib import Path
 
 from .lib.constants import *
 
@@ -128,7 +128,7 @@ class PlayerMenu(Menu):
         OFFSET_Y += (self.root.screen.Y - curY)
         change = dict(OFFSET_X=OFFSET_X, OFFSET_Y=OFFSET_Y)
         line: str
-        file = os_path.join(os_path.dirname(__file__), 'lib', 'constants.py')
+        file = Path(__file__).parent.joinpath('lib', 'constants.py')
         for line in fileinput(file, inplace=True):
             line = line.rstrip('\r\n')
             var = line.split(' = ')[0]

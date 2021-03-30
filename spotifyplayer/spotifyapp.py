@@ -2,7 +2,7 @@ from win32gui import SetForegroundWindow, SetWindowPos, ShowWindow
 from win32con import HWND_BOTTOM, HWND_TOP, SW_SHOWNOACTIVATE
 from pywinauto.timings import wait_until as win_wait_until
 from pywinauto.application import Application
-from tkinter import Tk, messagebox as Mbox
+from tkinter import messagebox as Mbox
 from operator import ne as op_ne
 
 from .lib.constants import *
