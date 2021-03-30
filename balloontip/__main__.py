@@ -1,14 +1,12 @@
-
 try:
-    from . import balloon_tip as btip
-except:
-    from __init__ import balloon_tip as btip
-
-
-def example():
-
-    btip('Demo', 'Type text here', 10)
+    from . import Balloontip
+except ImportError:
+    from pathlib import Path
+    from subprocess import run
+    pth = Path(__file__).parent
+    run(f'py -m {pth.name}', cwd=pth.parent)
+    raise SystemExit
 
 
 if __name__ == "__main__":
-    example()
+    Balloontip('Demo Title', 'Balloontip body text here', 5)
