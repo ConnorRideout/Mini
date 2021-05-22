@@ -1,0 +1,16 @@
+animelist/__main__.py
+animesorter/errorlog.txt
+spotifyplayer/__main__.py
+spotifyplayer/config.cfg
+spotifyplayer/player.py
+spotifyplayer/README.md
+spotifyplayer/lib/constants.py
+spotifyplayer/src/__init__.py
+spotifyplayer/src/changeshortcut.py
+spotifyplayer/src/marquee.py
+spotifyplayer/src/playermenu.py
+spotifyplayer/src/spotifyapp.py
+spotifyplayer/src/waitforexit.py
+spotifyplayer/src/watchappmini.py
+spotifyplayer/src/watchforupdate.py
+tooltip/__init__.py
