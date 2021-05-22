@@ -18,18 +18,25 @@ Attributes
 container : tkFrame
     The outermost widget. Contains the <scroll_canvas>, <scrollbar_v>, and
     <scrollbar_h> widgets
+
 scroll_canvas : tkCanvas
     The Canvas widget that allows scrolling. Contains the <class> widget
+
 scrollbar_v : tkScrollbar
     The vertical Scrollbar widget
+
 scrollbar_h : tkScrollbar
     The horizontal Scrollbar widget
+
 <class> : tkFrame
     The Frame widget that will hold all child widgets
+
 dohide : bool
     Whether to hide the scrollbars when not needed
+
 doupdate : bool
     Whether to automatically redraw the widget whenever it's resized
+
 scrollspeed : int
     The number of lines to scroll by. 0 disables mousewheel scrolling
 
@@ -37,6 +44,7 @@ Methods
 -------
 redraw() -> None
     Updates the widget's scroll-area and (un)hide the scrollbars
+
 Any <tkFrame> methods
 """
     __padding: tuple[int, int, int, int]
@@ -63,16 +71,22 @@ Any <tkFrame> methods
         ----------
         master : tkWidget, optional (default is tkTk)
             The parent widget
+
         scrollbars : str, optional (default is "SE")
             Where to put the scrollbars
+
         padding : int | sequence[int] where len=(2 or 4), optional (default is (3, 0, 0, 3))
             Padding around the scroll_canvas widget
+
         dohide : bool, optional (default is True)
             Whether to hide the scrollbars when not needed
+
         doupdate : bool, optional (default is True)
             Whether to automatically redraw the widget whenever it's resized
+
         scrollspeed : int, optional (default is 2)
             The number of lines to scroll by. 0 disables mousewheel scrolling
+
         **kwargs : keyword arguments, optional
             Any additional tkFrame parameters
         """
