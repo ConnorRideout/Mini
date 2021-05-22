@@ -1,4 +1,3 @@
-from json import dump
 from matplotlib.colors import Colormap
 import matplotlib.pyplot as plt
 from typing import Union as U
