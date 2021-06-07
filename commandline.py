@@ -30,19 +30,15 @@ class RunCmd(_Popen):
     -------
     `close_after`(timeout: float) -> subprocess.CompletedProcess
         Wait for the process to exit, forcing it to close after timeout is reached.
-
-    Class Methods
-    -------------
-    `openfile`(filename: str, visibility: str, **kwargs) -> None
-        Opens the specified file.
-
-    `askyesno`(question: str, default: str = "y", **kwargs) -> bool | None
-        Asks the user a yes/no question in a powershell console.
     """
 
-    def __init__(self, command: _U[str, tuple[str]], console: str = "default",
-                 capture_output: bool = False, visibility: str = "show",
-                 priority: str = "default", **kwargs):
+    def __init__(self,
+                 command: _U[str, tuple[str]],
+                 console: str = "default",
+                 capture_output: bool = False,
+                 visibility: str = "show",
+                 priority: str = "default",
+                 **kwargs):
         """-----
         Parameters
         ----------
@@ -59,19 +55,18 @@ class RunCmd(_Popen):
         **kwargs (additional keyword arguments, optional): [default=text=True] Any additional subprocess.Popen keyword arguments
         """
 
-        vars: dict[str, dict[str, int]]
-        vars = dict(c=dict(default=0,
-                           new=_NEW,
-                           none=_NONE,
-                           detached=_DETACHED),
-                    p=dict(lowest=_LOWEST,
-                           low=_LOW,
-                           default=0,
-                           high=_HIGH,
-                           highest=_HIGHEST),
-                    s=dict(hide=_HIDE,
-                           max=_MAX,
-                           min=_MIN))
+        vars: dict[str, dict[str, int]] = dict(c=dict(default=0,
+                                                      new=_NEW,
+                                                      none=_NONE,
+                                                      detached=_DETACHED),
+                                               p=dict(lowest=_LOWEST,
+                                                      low=_LOW,
+                                                      default=0,
+                                                      high=_HIGH,
+                                                      highest=_HIGHEST),
+                                               s=dict(hide=_HIDE,
+                                                      max=_MAX,
+                                                      min=_MIN))
         # get args
         kwargs['shell'] = kwargs.pop('shell', False)
         kwargs['text'] = kwargs.pop('text', True)
