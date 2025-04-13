@@ -1,36 +1,41 @@
-from subprocess import (CREATE_NEW_CONSOLE as _NEW,
-                        CREATE_NO_WINDOW as _NONE,
-                        DETACHED_PROCESS as _DETACHED)
-from subprocess import (IDLE_PRIORITY_CLASS as _LOWEST,
-                        BELOW_NORMAL_PRIORITY_CLASS as _LOW,
-                        ABOVE_NORMAL_PRIORITY_CLASS as _HIGH,
-                        HIGH_PRIORITY_CLASS as _HIGHEST)
-from win32con import (SW_HIDE as _HIDE,
-                      SW_SHOWMAXIMIZED as _MAX,
-                      SW_SHOWMINNOACTIVE as _MIN)
-from subprocess import (STARTF_USESHOWWINDOW as _USE_WIN,
-                        TimeoutExpired as _TimeoutExpired,
-                        CompletedProcess as _CompProcess,
-                        STARTUPINFO as _STARTUP,
-                        Popen as _Popen,
-                        PIPE as _PIPE)
-from typing import (Optional as _O,
-                    Union as _U)
 from pathlib import Path as _Path
 import shlex as _shlex
+
+from subprocess import (
+    DETACHED_PROCESS as _DETACHED,
+    CREATE_NEW_CONSOLE as _NEW,
+    CREATE_NO_WINDOW as _NONE
+)
+from subprocess import (
+    ABOVE_NORMAL_PRIORITY_CLASS as _HIGH,
+    BELOW_NORMAL_PRIORITY_CLASS as _LOW,
+    IDLE_PRIORITY_CLASS as _LOWEST,
+    HIGH_PRIORITY_CLASS as _HIGHEST
+)
+from win32con import (
+    SW_SHOWMINNOACTIVE as _MIN,
+    SW_SHOWMAXIMIZED as _MAX,
+    SW_HIDE as _HIDE,
+)
+from subprocess import (
+    TimeoutExpired as _TimeoutExpired,
+    CompletedProcess as _CompProcess,
+    STARTF_USESHOWWINDOW as _USE_WIN,
+    STARTUPINFO as _STARTUP,
+    Popen as _Popen,
+    PIPE as _PIPE
+)
+from typing import (
+    Optional as _O,
+    Union as _U
+)
 
 
 __all__ = ['RunCmd', 'openfile', 'askyesno', 'openatfile']
 
 
 class RunCmd(_Popen):
-    """Run a command using subprocess.Popen
-
-    Methods
-    -------
-    `close_after`(timeout: float) -> subprocess.CompletedProcess
-        Wait for the process to exit, forcing it to close after timeout is reached.
-    """
+    """Run a command using subprocess.Popen"""
 
     def __init__(self,
                  command: _U[str, tuple[str]],
@@ -39,7 +44,7 @@ class RunCmd(_Popen):
                  visibility: str = "show",
                  priority: str = "default",
                  **kwargs):
-        """-----
+        """-------
         Parameters
         ----------
         command (str | tuple): The command to run
@@ -53,6 +58,17 @@ class RunCmd(_Popen):
         priority (str, optional): [default="default"] The priority of the new process. One of "lowest", "low", "default", "high", or "highest"
 
         **kwargs (additional keyword arguments, optional): [default=text=True] Any additional subprocess.Popen keyword arguments
+
+        ----------
+        Attributes
+        ----------
+        stdin, stdout, stderr, pid, returncode
+
+        -------
+        Methods
+        -------
+        `close_after`(timeout: float) -> subprocess.CompletedProcess
+            Wait for the process to exit, forcing it to close after timeout is reached.
         """
 
         vars: dict[str, dict[str, int]] = dict(c=dict(default=0,
